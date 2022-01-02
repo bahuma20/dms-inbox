@@ -1,0 +1,30 @@
+<mat-form-field appearance="fill" style="width: 100%">
+  <mat-label>Tags</mat-label>
+  <mat-chip-list #chipList aria-label="Tags Auswahl">
+    <mat-chip *ngFor="let tag of tags"
+              (removed)="remove(tag.id)"
+              [style.background-color]="tag.color"
+              [style.color]="getFontColor(tag.color)">
+      {{tag.label}}
+      <button matChipRemove [style.color]="getButtonColor(tag.color)">
+        <mat-icon>cancel</mat-icon>
+      </button>
+    </mat-chip>
+
+    <input
+      placeholder="Neuer Tag..."
+      #tagInput
+      [formControl]="tagCtrl"
+      [matAutocomplete]="auto"
+      [matChipInputFor]="chipList"
+      [matChipInputSeparatorKeyCodes]="separatorKeyCodes"
+      (matChipInputTokenEnd)="add($event)"
+    >
+  </mat-chip-list>
+
+  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
+    <mat-option *ngFor="let tag of filteredTags | async" [value]="tag">
+      {{tag.label}}
+    </mat-option>
+  </mat-autocomplete>
+</mat-form-field>

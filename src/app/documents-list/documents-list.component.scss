@@ -1,0 +1,16 @@
+@keyframes rotateZoomIn {
+  0% {
+    transform: scale(0) rotate(-360deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0);
+  }
+
+}
+
+.document-list-item {
+  width: 200px;
+  cursor: pointer;
+  margin: 10px;
+}

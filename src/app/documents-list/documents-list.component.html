@@ -1,4 +1,18 @@
 <mat-spinner diameter="50" *ngIf="loading"></mat-spinner>
 <div *ngIf="documents" style="display: flex; flex-flow: row; flex-wrap: wrap;">
-  <app-document [document]="document" *ngFor="let document of documents" style="width: 200px" [routerLink]="['review', document.id]"></app-document>
+  <app-document
+                *ngFor="let document of documents" class="document-list-item"
+                [document]="document"
+                [class.mat-elevation-z5]="hoveredElement === document.id"
+                (mouseover)="hoveredElement=document.id"
+                (mouseleave)="hoveredElement=null"
+                [routerLink]="['review', document.id]"></app-document>
+</div>
+
+<div *ngIf="documents && documents.length == 0" style="text-align: center">
+  <h2>Du hast alle Dokumente einsortiert.</h2>
+  <mat-icon
+    style="display: block; width: 100px; height: 100px; font-size: 100px; color: rgba(0,0,0,.24); margin: 20px auto 0;animation: rotateZoomIn 1.5s forwards ease-out">
+    mood
+  </mat-icon>
 </div>

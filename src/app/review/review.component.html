@@ -1,5 +1,5 @@
 <mat-spinner *ngIf="loading"></mat-spinner>
-<div *ngIf="document" style="display: flex; flex-flow: row; justify-content: space-between;">
+<div *ngIf="document" style="display: flex; flex-flow: row; justify-content: center;">
   <div style="overflow-y: scroll; max-height: 90vh">
     <mat-spinner *ngIf="!imageUrl"></mat-spinner>
     <img *ngIf="imageUrl" [src]="imageUrl" style="max-width: 100%; height: auto" alt="PDF image">
@@ -9,9 +9,9 @@
     <h2>{{document.label}}</h2>
     <p>Importiert am {{document.datetime_created|date:'dd.MM.yyyy'}} um {{document.datetime_created|date:'HH:mm'}} Uhr</p>
 
-    <mat-form-field appearance="fill" style="width: 100%">
+    <mat-form-field appearance="fill" style="width: 100%" *ngIf="!submitLoading">
       <mat-label>Dokument-Typ</mat-label>
-      <mat-select (selectionChange)="selectDocumentType($event.value)">
+      <mat-select (selectionChange)="selectDocumentType($event.value)" required>
         <mat-option *ngFor="let documentType of availableDocumentTypes" [value]="documentType">
           {{documentType.label}}
         </mat-option>
@@ -20,12 +20,17 @@
 
     <mat-spinner *ngIf="metadataLoading"></mat-spinner>
 
-    <form *ngIf="form && metadata && !metadataLoading" [formGroup]="form" (ngSubmit)="submitForm(metadata)">
+    <p *ngIf="submitLoading">Wird gespeichert...</p>
+    <mat-progress-bar *ngIf="submitLoading" [value]="submitProgress * 100"></mat-progress-bar>
+
+    <form *ngIf="form && metadata && !metadataLoading && !submitLoading" [formGroup]="form" (ngSubmit)="submitForm(metadata)">
       <mat-form-field *ngFor="let met of metadata" appearance="fill" style="width: 100%">
         <mat-label>{{met.type.label}}</mat-label>
-        <input matInput [formControlName]="met.type.name" [required]="met.required" [type]="getFieldType(met)">
+        <input matInput [formControlName]="met.type.name" [required]="met.required" [type]="getFieldType(met)" [name]="selectedDocumentType?.id + '_' + met.type.name">
         <mat-error *ngIf="form.get(met.type.name)?.invalid">{{getErrorMessage(form.get(met.type.name))}}</mat-error>
       </mat-form-field>
+
+      <app-tags [tags]="tags" (tagsChanged)="tags = $event"></app-tags>
 
       <button mat-raised-button color="primary">Speichern</button>
     </form>

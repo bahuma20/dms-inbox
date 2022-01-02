@@ -9,6 +9,7 @@ import {Metadata} from "./model/Metadata";
 import {MetadataType} from "./model/MetadataType";
 import {DocumentType} from "./model/DocumentType";
 import {map} from "rxjs/operators";
+import {Tag} from "./model/Tag";
 
 @Injectable({
   providedIn: 'root'
@@ -110,6 +111,30 @@ export class MayanService {
       }));
   }
 
+  getAllTags(): Observable<Tag[]> {
+    return this.http.get(`${environment.apiUrl}/tags/`)
+      .pipe(map((data: any) => {
+        return data.results.map((entry: any) => {
+          return MayanService.parseTag(entry);
+        })
+      }));
+  }
+
+  createTag(label: string): Observable<Tag> {
+    return this.http.post(`${environment.apiUrl}/tags/`, {
+      color: '#000000',
+      label: label,
+    }).pipe(map(data => {
+      return MayanService.parseTag(data);
+    }));
+  }
+
+  attachTagToDocument(document: Document, tag: Tag): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/documents/${document.id}/tags/attach/`, {
+      tag: tag.id,
+    });
+  }
+
   private static parseDocument(entry: any): Document {
     return {
       id: entry.id,
@@ -123,6 +148,14 @@ export class MayanService {
         filename: entry.file_latest.filename,
         file: entry.file_latest.file
       }
+    };
+  }
+
+  private static parseTag(entry: any): Tag {
+    return {
+      id: entry.id,
+      label: entry.label,
+      color: entry.color,
     };
   }
 

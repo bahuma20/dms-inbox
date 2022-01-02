@@ -10,6 +10,7 @@ import {Document} from "../model/Document";
 export class DocumentsListComponent implements OnInit {
   loading: boolean = false;
   documents: Document[] | undefined;
+  hoveredElement: number | null = null;
 
   constructor(private mayan: MayanService) { }
 

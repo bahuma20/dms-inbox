@@ -7,6 +7,8 @@ import {MetadataService} from "../metadata.service";
 import {DocumentType} from "../model/DocumentType";
 import {Metadata} from "../model/Metadata";
 import {AbstractControl, FormBuilder, FormGroup, ValidatorFn, Validators} from "@angular/forms";
+import {Tag} from "../model/Tag";
+import {concat, Observable} from "rxjs";
 
 @Component({
   selector: 'app-review',
@@ -25,6 +27,8 @@ export class ReviewComponent implements OnInit {
   metadata?: Metadata[];
 
   form?: FormGroup;
+  tags: Tag[] = [];
+  submitProgress: number = 0;
 
   constructor(private mayan: MayanService,
               private route: ActivatedRoute,
@@ -40,6 +44,7 @@ export class ReviewComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       this.loading = true;
       let documentId = params.get('documentId');
+      this.tags = [];
 
       this.mayan.getDocument(Number(documentId))
         .subscribe(document => {
@@ -136,27 +141,42 @@ export class ReviewComponent implements OnInit {
     }
 
     this.submitLoading = true;
-    this.mayan.changeDocumentType(this.document, this.selectedDocumentType)
-      .subscribe(data => {
-        console.log(data);
-        if (!this.document) {
-          return;
+
+    let actions: Observable<any>[] = [];
+
+    // Change Document type
+    actions.push(this.mayan.changeDocumentType(this.document, this.selectedDocumentType));
+
+
+    // Add metadata
+    metadata = metadata.map(met => {
+      met.value = this.form?.get(met.type.name)?.value;
+      return met;
+    });
+
+    actions.push(this.metadataService.setDocumentMetadata(this.document, metadata));
+
+
+    // Set tags
+    this.tags.forEach(tag => {
+      actions.push(this.mayan.attachTagToDocument(this.document!, tag));
+    });
+
+
+    // Execute
+    this.submitProgress = 0;
+    let finishedActionCount = 0;
+
+    concat(...actions)
+      .subscribe({
+        next: () => {
+          finishedActionCount++;
+          this.submitProgress = finishedActionCount / actions.length;
+        },
+        complete: () => {
+          this.submitLoading = false;
+          this.router.navigate(['']);
         }
-
-        metadata = metadata.map(met => {
-          met.value = this.form?.get(met.type.name)?.value;
-          return met;
-        });
-
-        this.metadataService.setDocumentMetadata(this.document, metadata)
-          .subscribe((data: any) => {
-            console.log(data);
-
-            this.submitLoading = false;
-            this.router.navigate(['']);
-          });
       })
-
-
   }
 }

@@ -7,10 +7,10 @@
 
   <div style="width: 300px; padding: 24px">
     <h2>{{document.label}}</h2>
-    <p>Imported on {{document.datetime_created|date:'dd.MM.yyyy HH:mm'}}</p>
+    <p>Importiert am {{document.datetime_created|date:'dd.MM.yyyy'}} um {{document.datetime_created|date:'HH:mm'}} Uhr</p>
 
     <mat-form-field appearance="fill" style="width: 100%">
-      <mat-label>Document Type</mat-label>
+      <mat-label>Dokument-Typ</mat-label>
       <mat-select (selectionChange)="selectDocumentType($event.value)">
         <mat-option *ngFor="let documentType of availableDocumentTypes" [value]="documentType">
           {{documentType.label}}
@@ -20,11 +20,14 @@
 
     <mat-spinner *ngIf="metadataLoading"></mat-spinner>
 
-    <form *ngIf="metadata && !metadataLoading">
+    <form *ngIf="form && metadata && !metadataLoading" [formGroup]="form">
       <mat-form-field *ngFor="let met of metadata" appearance="fill" style="width: 100%">
         <mat-label>{{met.type.label}}</mat-label>
-        <input matInput [(ngModel)]="met.value" [required]="met.required" [ngModelOptions]="{standalone: true}" [type]="getFieldType(met)">
+        <input matInput [formControlName]="met.type.name" [required]="met.required" [type]="getFieldType(met)">
+        <mat-error *ngIf="form.get(met.type.name)?.invalid">{{getErrorMessage(form.get(met.type.name))}}</mat-error>
       </mat-form-field>
+
+      <button mat-raised-button color="primary">Speichern</button>
     </form>
   </div>
 </div>

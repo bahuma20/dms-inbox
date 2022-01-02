@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {MayanService} from "../mayan.service";
 import {Document} from "../model/Document";
 import {DomSanitizer, SafeResourceUrl} from "@angular/platform-browser";
@@ -6,6 +6,7 @@ import {ActivatedRoute} from "@angular/router";
 import {MetadataService} from "../metadata.service";
 import {DocumentType} from "../model/DocumentType";
 import {Metadata} from "../model/Metadata";
+import {AbstractControl, FormBuilder, FormGroup, ValidatorFn, Validators} from "@angular/forms";
 
 @Component({
   selector: 'app-review',
@@ -21,9 +22,14 @@ export class ReviewComponent implements OnInit {
   selectedDocumentType?: DocumentType;
   metadata?: Metadata[];
 
-  constructor(private mayan: MayanService, private route: ActivatedRoute, private sanitizer: DomSanitizer, private metadataService: MetadataService) { }
+  form?: FormGroup;
+
+  constructor(private mayan: MayanService, private route: ActivatedRoute, private sanitizer: DomSanitizer, private metadataService: MetadataService, private fb: FormBuilder) {
+  }
 
   ngOnInit(): void {
+    this.form = this.fb.group({});
+
     this.route.paramMap.subscribe(params => {
       this.loading = true;
       let documentId = params.get('documentId');
@@ -54,41 +60,66 @@ export class ReviewComponent implements OnInit {
     this.metadataLoading = true;
     this.selectedDocumentType = documentType;
 
-    if (this.document) {
-      this.metadataService.getAvailableMetadata(this.document, documentType.id)
-        .subscribe(metadata => {
-          metadata.sort((a, b) => {
-            if (a.type.parser == 'mayan.apps.metadata.parsers.DateParser' && b.type.parser !== 'mayan.apps.metadata.parsers.DateParser') {
-              return -1;
-            }
-
-            if (b.type.parser == 'mayan.apps.metadata.parsers.DateParser' && a.type.parser !== 'mayan.apps.metadata.parsers.DateParser') {
-              return 1;
-            }
-
-            if (a.required && !b.required) {
-              return -1;
-            }
-
-            if (b.required && !a.required) {
-              return 1;
-            }
-
-            return 0;
-          });
-
-          this.metadata = metadata;
-
-          this.metadataLoading = false;
-        });
+    if (!this.document) {
+      return
     }
+
+    this.metadataService.getAvailableMetadata(this.document, documentType.id)
+      .subscribe(metadata => {
+        metadata.sort((a, b) => {
+          if (a.type.parser == 'mayan.apps.metadata.parsers.DateParser' && b.type.parser !== 'mayan.apps.metadata.parsers.DateParser') {
+            return -1;
+          }
+
+          if (b.type.parser == 'mayan.apps.metadata.parsers.DateParser' && a.type.parser !== 'mayan.apps.metadata.parsers.DateParser') {
+            return 1;
+          }
+
+          if (a.required && !b.required) {
+            return -1;
+          }
+
+          if (b.required && !a.required) {
+            return 1;
+          }
+
+          return a.type.label.localeCompare(b.type.label);
+        });
+
+        this.metadata = metadata;
+
+        this.metadataLoading = false;
+
+        this.form = this.fb.group({});
+        this.metadata.forEach(met => {
+          let validators: ValidatorFn[] = [];
+
+          if (met.required) {
+            validators.push(Validators.required);
+          }
+
+          this.form?.addControl(met.type.name, this.fb.control(null, validators));
+        });
+      });
   }
 
-  getFieldType(met: Metadata) {
-    if (met.type.parser == 'mayan.apps.metadata.parsers.DateParser') {
+  getFieldType(metadata: Metadata) {
+    if (metadata.type.parser == 'mayan.apps.metadata.parsers.DateParser') {
       return 'date';
     }
 
     return 'text';
+  }
+
+  getErrorMessage(abstractControl?: AbstractControl | null): string {
+    if (!abstractControl) {
+      return '';
+    }
+
+    if (abstractControl.hasError('required')) {
+      return 'Dieses Feld ist erforderlich';
+    }
+
+    return '';
   }
 }

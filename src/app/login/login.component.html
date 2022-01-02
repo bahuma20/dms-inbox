@@ -1,17 +1,17 @@
 <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
   <mat-form-field appearance="fill">
-    <mat-label>Username</mat-label>
+    <mat-label>Benutzername</mat-label>
     <input matInput formControlName="username">
     <mat-error>
-      Username is required
+      Benutzername ist erforderlich
     </mat-error>
   </mat-form-field>
 
   <mat-form-field appearance="fill">
-    <mat-label>Password</mat-label>
+    <mat-label>Passwort</mat-label>
     <input type="password" matInput formControlName="password">
     <mat-error>
-      Password is required
+      Passwort ist erforderlich
     </mat-error>
   </mat-form-field>
 

@@ -1,0 +1,4 @@
+<mat-spinner diameter="50" *ngIf="loading"></mat-spinner>
+<div *ngIf="documents" style="display: flex; flex-flow: row; flex-wrap: wrap;">
+  <app-document [document]="document" *ngFor="let document of documents" style="width: 200px" [routerLink]="['review', document.id]"></app-document>
+</div>

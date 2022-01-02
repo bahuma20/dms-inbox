@@ -1,0 +1,8 @@
+<mat-card *ngIf="document">
+  <h3>{{document.label}}</h3>
+
+  <img *ngIf="imageUrl" [src]="imageUrl" style="max-width: 100%; height: auto;" alt="PDF Preview">
+  <mat-spinner *ngIf="!imageUrl"></mat-spinner>
+
+  <p>{{document.file_latest.filename}}</p>
+</mat-card>

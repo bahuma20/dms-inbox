@@ -1,0 +1,12 @@
+<mat-spinner *ngIf="loading"></mat-spinner>
+<div *ngIf="document" style="display: flex; flex-flow: row; justify-content: space-between;">
+  <div style="overflow-y: scroll; max-height: 90vh">
+    <mat-spinner *ngIf="!imageUrl"></mat-spinner>
+    <img *ngIf="imageUrl" [src]="imageUrl" style="max-width: 100%; height: auto" alt="PDF image">
+  </div>
+  <div style="width: 300px; padding: 24px">
+    <h2>{{document.label}}</h2>
+  </div>
+
+
+</div>

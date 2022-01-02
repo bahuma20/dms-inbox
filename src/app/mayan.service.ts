@@ -88,11 +88,11 @@ export class MayanService {
     return this.getAllDocumentTypesCache;
   }
 
-  getDocumentTypeMetadataTypes(documentTypeId: number): Observable<MetadataType[]> {
+  getDocumentTypeMetadata(documentTypeId: number): Observable<Metadata[]> {
     if (!this.getDocumentTypeMetadataTypesCache.has(documentTypeId)) {
       this.getDocumentTypeMetadataTypesCache.set(documentTypeId, this.http.get(`${environment.apiUrl}/document_types/${documentTypeId}/metadata_types`)
         .pipe(map((data: any) => {
-          return data.results.map((entry: any) => MayanService.parseMetadataType(entry.metadata_type));
+          return data.results.map((entry: any) => MayanService.parseMetadata(entry));
         }))
         .pipe(shareReplay(1)));
     }
@@ -105,12 +105,7 @@ export class MayanService {
     return this.http.get(`${environment.apiUrl}/documents/${document.id}/metadata`)
       .pipe(map((data: any) => {
         let metadataList: Metadata[] = data.results.map((entry: any) => {
-          let metadata: Metadata = {
-            id: entry.id,
-            type: MayanService.parseMetadataType(entry.metadata_type),
-            value: entry.value,
-            required: entry.required,
-          }
+          let metadata: Metadata = MayanService.parseMetadata(entry);
 
           return metadata;
         });
@@ -140,6 +135,15 @@ export class MayanService {
       id: entry.id,
       label: entry.label,
     };
+  }
+
+  private static parseMetadata(entry: any): Metadata {
+    return {
+      id: entry.id,
+      type: MayanService.parseMetadataType(entry.metadata_type),
+      value: entry.value,
+      required: entry.required,
+    }
   }
 
   private static parseMetadataType(entry: any): MetadataType {

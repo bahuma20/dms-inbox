@@ -11,19 +11,19 @@ export class MetadataService {
 
   getAvailableMetadata(document: Document, documentTypeId: number): Observable<Metadata[]> {
     return new Observable<Metadata[]>(subscriber => {
-      this.mayan.getDocumentTypeMetadataTypes(documentTypeId)
+      this.mayan.getDocumentTypeMetadata(documentTypeId)
         .subscribe(allAvailableMetadataTypes => {
           this.mayan.getDocumentMetadata(document)
             .subscribe(documentMetadata => {
-              allAvailableMetadataTypes.forEach(availableMetadataType => {
-                let existingMetadataType = documentMetadata.filter(value => { return value.type.id == availableMetadataType.id});
+              allAvailableMetadataTypes.forEach(availableMetadata => {
+                let existingMetadataType = documentMetadata.filter(value => { return value.type.id == availableMetadata.type.id});
 
                 if (existingMetadataType.length == 0) {
                   documentMetadata.push({
                     id: undefined,
-                    type: availableMetadataType,
+                    type: availableMetadata.type,
                     value: null, // TODO: find date from OCR
-                    required: false,
+                    required: availableMetadata.required,
                   });
                 }
               });

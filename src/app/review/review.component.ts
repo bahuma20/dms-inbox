@@ -3,6 +3,7 @@ import {MayanService} from "../mayan.service";
 import {Document} from "../model/Document";
 import {DomSanitizer, SafeResourceUrl} from "@angular/platform-browser";
 import {ActivatedRoute} from "@angular/router";
+import {MetadataService} from "../metadata.service";
 
 @Component({
   selector: 'app-review',
@@ -14,7 +15,7 @@ export class ReviewComponent implements OnInit {
   document: Document | undefined;
   imageUrl: SafeResourceUrl | undefined;
 
-  constructor(private mayan: MayanService, private route: ActivatedRoute, private sanitizer: DomSanitizer) { }
+  constructor(private mayan: MayanService, private route: ActivatedRoute, private sanitizer: DomSanitizer, private metadataService: MetadataService) { }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -32,9 +33,18 @@ export class ReviewComponent implements OnInit {
                 .subscribe(image => {
                   this.imageUrl = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(image));
                 });
-            })
+            });
 
-
+          this.mayan.getAllDocumentTypes()
+            .subscribe(documentTypes => {
+              documentTypes = documentTypes.filter(value => value.label !== 'INBOX');
+              documentTypes.forEach(documentType => {
+                if (this.document) {
+                  this.metadataService.getAvailableMetadata(this.document, documentType.id)
+                    .subscribe(data => console.log(documentType.label, data));
+                }
+              });
+            });
         });
     });
 

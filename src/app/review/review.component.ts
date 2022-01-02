@@ -58,8 +58,20 @@ export class ReviewComponent implements OnInit {
       this.metadataService.getAvailableMetadata(this.document, documentType.id)
         .subscribe(metadata => {
           metadata.sort((a, b) => {
-            if (a.type.parser == 'mayan.apps.metadata.parsers.DateParser') {
+            if (a.type.parser == 'mayan.apps.metadata.parsers.DateParser' && b.type.parser !== 'mayan.apps.metadata.parsers.DateParser') {
               return -1;
+            }
+
+            if (b.type.parser == 'mayan.apps.metadata.parsers.DateParser' && a.type.parser !== 'mayan.apps.metadata.parsers.DateParser') {
+              return 1;
+            }
+
+            if (a.required && !b.required) {
+              return -1;
+            }
+
+            if (b.required && !a.required) {
+              return 1;
             }
 
             return 0;

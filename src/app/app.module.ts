@@ -15,7 +15,7 @@ import { DocumentsListComponent } from './documents-list/documents-list.componen
 import {MatCardModule} from "@angular/material/card";
 import {BasicAuthInterceptor} from "./_helpers/basic-auth.interceptor";
 import {ErrorInterceptor} from "./_helpers/error.interceptor";
-import {ReactiveFormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import { LoginComponent } from './login/login.component';
 import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatInputModule} from "@angular/material/input";
@@ -23,6 +23,7 @@ import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import { DocumentComponent } from './document/document.component';
 import { ReviewComponent } from './review/review.component';
 import {ImageCachingInterceptor} from "./_helpers/image-caching.interceptor";
+import {MatSelectModule} from "@angular/material/select";
 
 @NgModule({
   declarations: [
@@ -52,6 +53,8 @@ import {ImageCachingInterceptor} from "./_helpers/image-caching.interceptor";
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    MatSelectModule,
+    FormsModule,
   ],
   providers: [
     {provide: HTTP_INTERCEPTORS, useClass: BasicAuthInterceptor, multi: true},

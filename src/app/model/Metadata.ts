@@ -6,4 +6,6 @@ export interface Metadata {
   type: MetadataType
 
   value?: any;
+
+  required: boolean;
 }

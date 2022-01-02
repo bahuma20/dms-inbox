@@ -4,9 +4,25 @@
     <mat-spinner *ngIf="!imageUrl"></mat-spinner>
     <img *ngIf="imageUrl" [src]="imageUrl" style="max-width: 100%; height: auto" alt="PDF image">
   </div>
+
   <div style="width: 300px; padding: 24px">
     <h2>{{document.label}}</h2>
+
+    <mat-form-field appearance="fill" style="width: 100%">
+      <mat-select (selectionChange)="selectDocumentType($event.value)" placeholder="Select" label="Document Type">
+        <mat-option *ngFor="let documentType of availableDocumentTypes" [value]="documentType">
+          {{documentType.label}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-spinner *ngIf="metadataLoading"></mat-spinner>
+
+    <form *ngIf="metadata && !metadataLoading">
+      <mat-form-field *ngFor="let met of metadata" appearance="fill" style="width: 100%">
+        <mat-label>{{met.type.label}}</mat-label>
+        <input matInput [(ngModel)]="met.value" [required]="met.required" [ngModelOptions]="{standalone: true}" [type]="getFieldType(met)">
+      </mat-form-field>
+    </form>
   </div>
-
-
 </div>

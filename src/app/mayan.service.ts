@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {mergeMap, Observable} from "rxjs";
+import {mergeMap, Observable, shareReplay} from "rxjs";
 import {environment} from "../environments/environment";
 import {Document} from "./model/Document";
 import {File} from "./model/File";
@@ -14,6 +14,9 @@ import {map} from "rxjs/operators";
   providedIn: 'root'
 })
 export class MayanService {
+  private getAllDocumentTypesCache?: Observable<DocumentType[]>;
+  private getDocumentTypeMetadataTypesCache: Map<number, Observable<MetadataType[]>> = new Map();
+
   constructor(private http: HttpClient) {
   }
 
@@ -74,17 +77,28 @@ export class MayanService {
   }
 
   getAllDocumentTypes(): Observable<DocumentType[]> {
-    return this.http.get(`${environment.apiUrl}/document_types/`)
-      .pipe(map((data: any) => {
-        return data.results.map((entry: any) => MayanService.parseDocumentType(entry));
-      }))
+    if (!this.getAllDocumentTypesCache) {
+      this.getAllDocumentTypesCache = this.http.get(`${environment.apiUrl}/document_types/`)
+        .pipe(map((data: any) => {
+          return data.results.map((entry: any) => MayanService.parseDocumentType(entry));
+        }))
+        .pipe(shareReplay(1))
+    }
+
+    return this.getAllDocumentTypesCache;
   }
 
   getDocumentTypeMetadataTypes(documentTypeId: number): Observable<MetadataType[]> {
-    return this.http.get(`${environment.apiUrl}/document_types/${documentTypeId}/metadata_types`)
-      .pipe(map((data: any) => {
-        return data.results.map((entry: any) => MayanService.parseMetadataType(entry.metadata_type));
-      }));
+    if (!this.getDocumentTypeMetadataTypesCache.has(documentTypeId)) {
+      this.getDocumentTypeMetadataTypesCache.set(documentTypeId, this.http.get(`${environment.apiUrl}/document_types/${documentTypeId}/metadata_types`)
+        .pipe(map((data: any) => {
+          return data.results.map((entry: any) => MayanService.parseMetadataType(entry.metadata_type));
+        }))
+        .pipe(shareReplay(1)));
+    }
+
+    // @ts-ignore
+    return this.getDocumentTypeMetadataTypesCache.get(documentTypeId);
   }
 
   getDocumentMetadata(document: Document): Observable<Metadata[]> {
@@ -95,6 +109,7 @@ export class MayanService {
             id: entry.id,
             type: MayanService.parseMetadataType(entry.metadata_type),
             value: entry.value,
+            required: entry.required,
           }
 
           return metadata;

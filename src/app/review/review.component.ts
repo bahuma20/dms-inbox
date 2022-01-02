@@ -4,6 +4,8 @@ import {Document} from "../model/Document";
 import {DomSanitizer, SafeResourceUrl} from "@angular/platform-browser";
 import {ActivatedRoute} from "@angular/router";
 import {MetadataService} from "../metadata.service";
+import {DocumentType} from "../model/DocumentType";
+import {Metadata} from "../model/Metadata";
 
 @Component({
   selector: 'app-review',
@@ -12,8 +14,12 @@ import {MetadataService} from "../metadata.service";
 })
 export class ReviewComponent implements OnInit {
   loading = true;
-  document: Document | undefined;
-  imageUrl: SafeResourceUrl | undefined;
+  metadataLoading = false;
+  document?: Document;
+  imageUrl?: SafeResourceUrl;
+  availableDocumentTypes?: DocumentType[];
+  selectedDocumentType?: DocumentType;
+  metadata?: Metadata[];
 
   constructor(private mayan: MayanService, private route: ActivatedRoute, private sanitizer: DomSanitizer, private metadataService: MetadataService) { }
 
@@ -38,18 +44,39 @@ export class ReviewComponent implements OnInit {
           this.mayan.getAllDocumentTypes()
             .subscribe(documentTypes => {
               documentTypes = documentTypes.filter(value => value.label !== 'INBOX');
-              documentTypes.forEach(documentType => {
-                if (this.document) {
-                  this.metadataService.getAvailableMetadata(this.document, documentType.id)
-                    .subscribe(data => console.log(documentType.label, data));
-                }
-              });
+              this.availableDocumentTypes = documentTypes;
             });
         });
     });
-
-
-
   }
 
+  selectDocumentType(documentType: DocumentType) {
+    this.metadataLoading = true;
+    this.selectedDocumentType = documentType;
+
+    if (this.document) {
+      this.metadataService.getAvailableMetadata(this.document, documentType.id)
+        .subscribe(metadata => {
+          metadata.sort((a, b) => {
+            if (a.type.parser == 'mayan.apps.metadata.parsers.DateParser') {
+              return -1;
+            }
+
+            return 0;
+          });
+
+          this.metadata = metadata;
+
+          this.metadataLoading = false;
+        });
+    }
+  }
+
+  getFieldType(met: Metadata) {
+    if (met.type.parser == 'mayan.apps.metadata.parsers.DateParser') {
+      return 'date';
+    }
+
+    return 'text';
+  }
 }

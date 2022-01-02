@@ -22,7 +22,8 @@ export class MetadataService {
                   documentMetadata.push({
                     id: undefined,
                     type: availableMetadataType,
-                    value: null,
+                    value: null, // TODO: find date from OCR
+                    required: false,
                   });
                 }
               });

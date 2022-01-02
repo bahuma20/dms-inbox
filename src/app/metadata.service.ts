@@ -2,8 +2,9 @@ import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {MayanService} from "./mayan.service";
 import {Document} from "./model/Document";
-import {Observable} from "rxjs";
+import {forkJoin, mergeMap, Observable} from "rxjs";
 import {Metadata} from "./model/Metadata";
+import {map} from "rxjs/operators";
 
 @Injectable({providedIn: 'root'})
 export class MetadataService {
@@ -32,5 +33,35 @@ export class MetadataService {
             });
         })
     });
+  }
+
+  setDocumentMetadata(document: Document, metadata: Metadata[]): Observable<any[]> {
+    return this.mayan.getDocumentMetadata(document)
+      .pipe(map(documentMetadata => {
+        let actions: Observable<any>[] = [];
+
+        metadata.forEach(met => {
+          let existingMetadataItem = documentMetadata.filter(item => {
+            return item.type.id == met.type.id;
+          });
+
+          if (existingMetadataItem.length > 0) {
+
+            let existingItemId = existingMetadataItem[0].id;
+            if (!existingItemId) {
+              return;
+            }
+            console.log('set ' + existingItemId);
+            actions.push(this.mayan.setMetadataItem(document, existingItemId, met.value));
+          } else {
+            console.log('add ' + met.type.id);
+            actions.push(this.mayan.addMetadataItem(document, met.type.id, met.value));
+          }
+        });
+
+        return actions;
+      })).pipe(mergeMap(actions => forkJoin(actions)));
+
+
   }
 }

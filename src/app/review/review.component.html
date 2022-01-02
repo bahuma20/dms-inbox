@@ -20,7 +20,7 @@
 
     <mat-spinner *ngIf="metadataLoading"></mat-spinner>
 
-    <form *ngIf="form && metadata && !metadataLoading" [formGroup]="form">
+    <form *ngIf="form && metadata && !metadataLoading" [formGroup]="form" (ngSubmit)="submitForm(metadata)">
       <mat-form-field *ngFor="let met of metadata" appearance="fill" style="width: 100%">
         <mat-label>{{met.type.label}}</mat-label>
         <input matInput [formControlName]="met.type.name" [required]="met.required" [type]="getFieldType(met)">

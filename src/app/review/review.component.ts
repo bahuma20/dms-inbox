@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {MayanService} from "../mayan.service";
 import {Document} from "../model/Document";
 import {DomSanitizer, SafeResourceUrl} from "@angular/platform-browser";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {MetadataService} from "../metadata.service";
 import {DocumentType} from "../model/DocumentType";
 import {Metadata} from "../model/Metadata";
@@ -16,6 +16,8 @@ import {AbstractControl, FormBuilder, FormGroup, ValidatorFn, Validators} from "
 export class ReviewComponent implements OnInit {
   loading = true;
   metadataLoading = false;
+  submitLoading = false;
+
   document?: Document;
   imageUrl?: SafeResourceUrl;
   availableDocumentTypes?: DocumentType[];
@@ -24,7 +26,12 @@ export class ReviewComponent implements OnInit {
 
   form?: FormGroup;
 
-  constructor(private mayan: MayanService, private route: ActivatedRoute, private sanitizer: DomSanitizer, private metadataService: MetadataService, private fb: FormBuilder) {
+  constructor(private mayan: MayanService,
+              private route: ActivatedRoute,
+              private sanitizer: DomSanitizer,
+              private metadataService: MetadataService,
+              private fb: FormBuilder,
+              private router: Router) {
   }
 
   ngOnInit(): void {
@@ -88,8 +95,6 @@ export class ReviewComponent implements OnInit {
 
         this.metadata = metadata;
 
-        this.metadataLoading = false;
-
         this.form = this.fb.group({});
         this.metadata.forEach(met => {
           let validators: ValidatorFn[] = [];
@@ -100,6 +105,8 @@ export class ReviewComponent implements OnInit {
 
           this.form?.addControl(met.type.name, this.fb.control(null, validators));
         });
+
+        this.metadataLoading = false;
       });
   }
 
@@ -121,5 +128,35 @@ export class ReviewComponent implements OnInit {
     }
 
     return '';
+  }
+
+  submitForm(metadata: Metadata[]) {
+    if (!this.document || !this.selectedDocumentType) {
+      return;
+    }
+
+    this.submitLoading = true;
+    this.mayan.changeDocumentType(this.document, this.selectedDocumentType)
+      .subscribe(data => {
+        console.log(data);
+        if (!this.document) {
+          return;
+        }
+
+        metadata = metadata.map(met => {
+          met.value = this.form?.get(met.type.name)?.value;
+          return met;
+        });
+
+        this.metadataService.setDocumentMetadata(this.document, metadata)
+          .subscribe((data: any) => {
+            console.log(data);
+
+            this.submitLoading = false;
+            this.router.navigate(['']);
+          });
+      })
+
+
   }
 }

@@ -102,13 +102,9 @@ export class MayanService {
   }
 
   getDocumentMetadata(document: Document): Observable<Metadata[]> {
-    return this.http.get(`${environment.apiUrl}/documents/${document.id}/metadata`)
+    return this.http.get(`${environment.apiUrl}/documents/${document.id}/metadata/`)
       .pipe(map((data: any) => {
-        let metadataList: Metadata[] = data.results.map((entry: any) => {
-          let metadata: Metadata = MayanService.parseMetadata(entry);
-
-          return metadata;
-        });
+        let metadataList: Metadata[] = data.results.map((entry: any) => MayanService.parseMetadata(entry));
 
         return metadataList;
       }));
@@ -128,6 +124,25 @@ export class MayanService {
         file: entry.file_latest.file
       }
     };
+  }
+
+  changeDocumentType(document: Document, documentType: DocumentType): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/documents/${document.id}/type/change/`, {
+      document_type_id: documentType.id
+    });
+  }
+
+  setMetadataItem(document: Document, metadataItemId: number, value: any): Observable<any> {
+    return this.http.patch(`${environment.apiUrl}/documents/${document.id}/metadata/${metadataItemId}/`, {
+      value
+    });
+  }
+
+  addMetadataItem(document: Document, metadataTypeId: number, value: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/documents/${document.id}/metadata/`, {
+      metadata_type_id: metadataTypeId,
+      value,
+    });
   }
 
   private static parseDocumentType(entry: any): DocumentType {
@@ -156,5 +171,4 @@ export class MayanService {
       default: entry.default,
     }
   }
-
 }

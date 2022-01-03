@@ -36,4 +36,4 @@ jobs:
           key: ${{ secrets.KEY }}
           source: "./dist"
           target: ${{ secrets.TARGET_PATH }}
-          strip_components: 2
+          strip_components: 3

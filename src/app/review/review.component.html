@@ -31,6 +31,7 @@
                formControlName="label"
                [matAutocomplete]="labelAutocomplete"
                (focusin)="onLabelFocusIn()"
+               (focusout)="onLabelFocusOut()"
                required="true"
                #labelInput>
         <button mat-icon-button matSuffix *ngIf="form.get('label')?.touched" (click)="restoreLabel($event)" [attr.aria-label]="'Titel zurücksetzen'">

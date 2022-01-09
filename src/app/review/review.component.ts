@@ -240,13 +240,19 @@ export class ReviewComponent implements OnInit {
     }
   }
 
+  onLabelFocusOut() {
+    if (this.form?.get('label')?.value == this.document?.label) {
+      this.form?.get('label')?.markAsUntouched();
+    }
+  }
+
   restoreLabel($event: MouseEvent) {
       $event.preventDefault();
       this.labelInput?.nativeElement.blur();
 
       setTimeout(() => {
         this.form?.get('label')?.setValue(this.document?.label);
-      }, 100)
-
+        this.form?.get('label')?.markAsUntouched();
+      }, 100);
   }
 }

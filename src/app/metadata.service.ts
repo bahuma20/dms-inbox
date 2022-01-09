@@ -16,20 +16,27 @@ export class MetadataService {
         .subscribe(allAvailableMetadataTypes => {
           this.mayan.getDocumentMetadata(document)
             .subscribe(documentMetadata => {
+              let metadata: Metadata[] = [];
+
               allAvailableMetadataTypes.forEach(availableMetadata => {
+                let metadataItem: Metadata = {
+                  id: undefined,
+                  type: availableMetadata.type,
+                  value: null,
+                  required: availableMetadata.required,
+                };
+
                 let existingMetadataType = documentMetadata.filter(value => { return value.type.id == availableMetadata.type.id});
 
-                if (existingMetadataType.length == 0) {
-                  documentMetadata.push({
-                    id: undefined,
-                    type: availableMetadata.type,
-                    value: null, // TODO: find date from OCR
-                    required: availableMetadata.required,
-                  });
+                if (existingMetadataType.length > 0) {
+                  metadataItem.id = existingMetadataType[0].id;
+                  metadataItem.value = existingMetadataType[0].value;
                 }
+
+                metadata.push(metadataItem);
               });
 
-              subscriber.next(documentMetadata);
+              subscriber.next(metadata);
             });
         })
     });
@@ -51,10 +58,8 @@ export class MetadataService {
             if (!existingItemId) {
               return;
             }
-            console.log('set ' + existingItemId);
             actions.push(this.mayan.setMetadataItem(document, existingItemId, met.value));
           } else {
-            console.log('add ' + met.type.id);
             actions.push(this.mayan.addMetadataItem(document, met.type.id, met.value));
           }
         });

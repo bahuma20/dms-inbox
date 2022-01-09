@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {MayanService} from "../mayan.service";
 import {Document} from "../model/Document";
 import {DomSanitizer, SafeResourceUrl} from "@angular/platform-browser";
@@ -6,9 +6,10 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {MetadataService} from "../metadata.service";
 import {DocumentType} from "../model/DocumentType";
 import {Metadata} from "../model/Metadata";
-import {AbstractControl, FormBuilder, FormGroup, ValidatorFn, Validators} from "@angular/forms";
+import {AbstractControl, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators} from "@angular/forms";
 import {Tag} from "../model/Tag";
-import {concat, Observable} from "rxjs";
+import {concat, debounceTime, finalize, Observable, switchMap, tap} from "rxjs";
+import {SuggestionsService} from "../suggestions.service";
 
 @Component({
   selector: 'app-review',
@@ -30,17 +31,52 @@ export class ReviewComponent implements OnInit {
   tags: Tag[] = [];
   submitProgress: number = 0;
 
+  @ViewChild('labelInput') labelInput?: ElementRef;
+  labelSuggestions: string[] = [];
+  labelSuggestionsLoading = false;
+
   constructor(private mayan: MayanService,
               private route: ActivatedRoute,
               private sanitizer: DomSanitizer,
               private metadataService: MetadataService,
+              private suggestionsService: SuggestionsService,
               private fb: FormBuilder,
               private router: Router) {
   }
 
   ngOnInit(): void {
-    this.form = this.fb.group({});
+    // Initialize form
+    this.form = this.fb.group({
+      label: new FormControl(null, Validators.required),
+    });
 
+
+    // Add label autocomplete pipe
+    this.form.controls['label'].valueChanges.pipe(
+      debounceTime(300),
+      tap(() => {
+        this.labelSuggestions = [];
+        this.labelSuggestionsLoading = true;
+      }),
+      switchMap(value => {
+        if (!this.selectedDocumentType) {
+          return [];
+        }
+
+        return this.suggestionsService.suggestDocumentTitle(this.selectedDocumentType, value)
+          .pipe(
+            finalize(() => {
+              this.labelSuggestionsLoading = false;
+            })
+          )
+
+      })
+    ).subscribe(suggestions => {
+      this.labelSuggestions = suggestions;
+    });
+
+
+    // Load document by id from route
     this.route.paramMap.subscribe(params => {
       this.loading = true;
       let documentId = params.get('documentId');
@@ -50,6 +86,9 @@ export class ReviewComponent implements OnInit {
         .subscribe(document => {
           this.loading = false;
           this.document = document;
+          this.form?.setValue({
+            label: document.label
+          });
 
           this.mayan.getDocumentFilePages(document, document.file_latest)
             .subscribe(pages => {
@@ -100,7 +139,7 @@ export class ReviewComponent implements OnInit {
 
         this.metadata = metadata;
 
-        this.form = this.fb.group({});
+        let newMetadataFormGroup = this.fb.group({});
         this.metadata.forEach(met => {
           let validators: ValidatorFn[] = [];
 
@@ -108,8 +147,11 @@ export class ReviewComponent implements OnInit {
             validators.push(Validators.required);
           }
 
-          this.form?.addControl(met.type.name, this.fb.control(null, validators));
+          newMetadataFormGroup.addControl(met.type.name, this.fb.control(null, validators));
         });
+
+        this.form?.removeControl('metadata');
+        this.form?.addControl('metadata', newMetadataFormGroup);
 
         this.metadataLoading = false;
       });
@@ -140,6 +182,10 @@ export class ReviewComponent implements OnInit {
       return;
     }
 
+    if (!this.form?.valid) {
+      return;
+    }
+
     this.submitLoading = true;
 
     let actions: Observable<any>[] = [];
@@ -148,9 +194,16 @@ export class ReviewComponent implements OnInit {
     actions.push(this.mayan.changeDocumentType(this.document, this.selectedDocumentType));
 
 
+    // Set label
+    let newLabel = this.form?.get('label')?.value;
+    if (newLabel !== this.document.label) {
+      actions.push(this.mayan.setDocumentLabel(this.document, newLabel));
+    }
+
+
     // Add metadata
     metadata = metadata.map(met => {
-      met.value = this.form?.get(met.type.name)?.value;
+      met.value = this.form?.get('metadata')?.get(met.type.name)?.value;
       return met;
     });
 
@@ -178,5 +231,22 @@ export class ReviewComponent implements OnInit {
           this.router.navigate(['']);
         }
       })
+  }
+
+  onLabelFocusIn() {
+    if (this.form?.get('label')?.value == this.document?.label) {
+      this.form?.get('label')?.setValue('');
+      this.form?.get('label')?.markAsTouched();
+    }
+  }
+
+  restoreLabel($event: MouseEvent) {
+      $event.preventDefault();
+      this.labelInput?.nativeElement.blur();
+
+      setTimeout(() => {
+        this.form?.get('label')?.setValue(this.document?.label);
+      }, 100)
+
   }
 }

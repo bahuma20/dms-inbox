@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from "@angular/common/http";
+import {HttpClient, HttpParams} from "@angular/common/http";
 import {mergeMap, Observable, shareReplay} from "rxjs";
 import {environment} from "../environments/environment";
 import {Document} from "./model/Document";
@@ -22,12 +22,20 @@ export class MayanService {
   }
 
   listInboxDocuments(): Observable<Document[]> {
-    return this.http.get(`${environment.apiUrl}/search/advanced/documents.DocumentSearchResult?document_type__label=INBOX`)
-      .pipe(map((data: any) => {
-        return data.results.map((entry: any) => {
-          return MayanService.parseDocument(entry);
-        })
-      }));
+    let params = new HttpParams();
+    params = params.append('document_type__label', 'INBOX');
+
+    return this.searchDocuments(params);
+  }
+
+  searchDocuments(parameters: HttpParams): Observable<Document[]> {
+    return this.http.get(`${environment.apiUrl}/search/advanced/documents.DocumentSearchResult/`, {
+      params: parameters
+    }).pipe(map((data: any) => {
+      return data.results.map((entry: any) => {
+        return MayanService.parseDocument(entry);
+      })
+    }));
   }
 
   getDocument(documentId: number): Observable<Document> {
@@ -151,17 +159,15 @@ export class MayanService {
     };
   }
 
-  private static parseTag(entry: any): Tag {
-    return {
-      id: entry.id,
-      label: entry.label,
-      color: entry.color,
-    };
-  }
-
   changeDocumentType(document: Document, documentType: DocumentType): Observable<any> {
     return this.http.post(`${environment.apiUrl}/documents/${document.id}/type/change/`, {
       document_type_id: documentType.id
+    });
+  }
+
+  setDocumentLabel(document: Document, label: string): Observable<any> {
+    return this.http.patch(`${environment.apiUrl}/documents/${document.id}/`, {
+      label: label
     });
   }
 
@@ -176,6 +182,14 @@ export class MayanService {
       metadata_type_id: metadataTypeId,
       value,
     });
+  }
+
+  private static parseTag(entry: any): Tag {
+    return {
+      id: entry.id,
+      label: entry.label,
+      color: entry.color,
+    };
   }
 
   private static parseDocumentType(entry: any): DocumentType {

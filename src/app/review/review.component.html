@@ -9,7 +9,7 @@
     <h2>{{document.label}}</h2>
     <p>Importiert am {{document.datetime_created|date:'dd.MM.yyyy'}} um {{document.datetime_created|date:'HH:mm'}} Uhr</p>
 
-    <mat-form-field appearance="fill" style="width: 100%" *ngIf="!submitLoading">
+    <mat-form-field appearance="fill" style="width: 100%; margin-bottom: .5em;" *ngIf="!submitLoading">
       <mat-label>Dokument-Typ</mat-label>
       <mat-select (selectionChange)="selectDocumentType($event.value)" required>
         <mat-option *ngFor="let documentType of availableDocumentTypes" [value]="documentType">
@@ -24,11 +24,32 @@
     <mat-progress-bar *ngIf="submitLoading" [value]="submitProgress * 100"></mat-progress-bar>
 
     <form *ngIf="form && metadata && !metadataLoading && !submitLoading" [formGroup]="form" (ngSubmit)="submitForm(metadata)">
-      <mat-form-field *ngFor="let met of metadata" appearance="fill" style="width: 100%">
-        <mat-label>{{met.type.label}}</mat-label>
-        <input matInput [formControlName]="met.type.name" [required]="met.required" [type]="getFieldType(met)" [name]="selectedDocumentType?.id + '_' + met.type.name">
-        <mat-error *ngIf="form.get(met.type.name)?.invalid">{{getErrorMessage(form.get(met.type.name))}}</mat-error>
+      <mat-form-field appearance="fill" style="width: 100%; margin-bottom: .5em;">
+        <mat-label>Titel</mat-label>
+        <input matInput
+               [placeholder]="document.label"
+               formControlName="label"
+               [matAutocomplete]="labelAutocomplete"
+               (focusin)="onLabelFocusIn()"
+               required="true"
+               #labelInput>
+        <button mat-icon-button matSuffix *ngIf="form.get('label')?.touched" (click)="restoreLabel($event)" [attr.aria-label]="'Titel zurücksetzen'">
+          <mat-icon>undo</mat-icon>
+        </button>
+        <mat-autocomplete #labelAutocomplete="matAutocomplete">
+          <ng-container *ngIf="!labelSuggestionsLoading">
+            <mat-option *ngFor="let suggestion of labelSuggestions" [value]="suggestion">{{suggestion}}</mat-option>
+          </ng-container>
+        </mat-autocomplete>
       </mat-form-field>
+
+      <div formGroupName="metadata">
+        <mat-form-field *ngFor="let met of metadata" appearance="fill" style="width: 100%; margin-bottom: .5em;">
+          <mat-label>{{met.type.label}}</mat-label>
+          <input matInput [formControlName]="met.type.name" [required]="met.required" [type]="getFieldType(met)" [name]="selectedDocumentType?.id + '_' + met.type.name">
+          <mat-error *ngIf="form.get('metadata')?.get(met.type.name)?.invalid">{{getErrorMessage(form.get('metadata')?.get(met.type.name))}}</mat-error>
+        </mat-form-field>
+      </div>
 
       <app-tags [tags]="tags" (tagsChanged)="tags = $event"></app-tags>
 

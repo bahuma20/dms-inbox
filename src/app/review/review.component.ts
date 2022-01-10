@@ -10,6 +10,7 @@ import {AbstractControl, FormBuilder, FormControl, FormGroup, ValidatorFn, Valid
 import {Tag} from "../model/Tag";
 import {concat, debounceTime, finalize, Observable, switchMap, tap} from "rxjs";
 import {SuggestionsService} from "../suggestions.service";
+import {environment} from "../../environments/environment";
 
 @Component({
   selector: 'app-review',
@@ -31,9 +32,12 @@ export class ReviewComponent implements OnInit {
   tags: Tag[] = [];
   submitProgress: number = 0;
 
+  allowLabel = false;
   @ViewChild('labelInput') labelInput?: ElementRef;
   labelSuggestions: string[] = [];
   labelSuggestionsLoading = false;
+
+  dateSuggestions: Date[] = [];
 
   constructor(private mayan: MayanService,
               private route: ActivatedRoute,
@@ -103,6 +107,13 @@ export class ReviewComponent implements OnInit {
               documentTypes = documentTypes.filter(value => value.label !== 'INBOX');
               this.availableDocumentTypes = documentTypes;
             });
+
+          this.suggestionsService.suggestDates(document)
+            .subscribe(dateSuggestions => {
+              this.dateSuggestions = dateSuggestions.sort((a, b) => {
+                return b.getTime() - a.getTime();
+              });
+            });
         });
     });
   }
@@ -110,6 +121,8 @@ export class ReviewComponent implements OnInit {
   selectDocumentType(documentType: DocumentType) {
     this.metadataLoading = true;
     this.selectedDocumentType = documentType;
+
+    this.allowLabel = environment.enableLabelOnDocumentTypes.indexOf(this.selectedDocumentType.label) !== -1;
 
     if (!this.document) {
       return
@@ -195,9 +208,11 @@ export class ReviewComponent implements OnInit {
 
 
     // Set label
-    let newLabel = this.form?.get('label')?.value;
-    if (newLabel !== this.document.label) {
-      actions.push(this.mayan.setDocumentLabel(this.document, newLabel));
+    if (this.allowLabel) {
+      let newLabel = this.form?.get('label')?.value;
+      if (newLabel !== this.document.label) {
+        actions.push(this.mayan.setDocumentLabel(this.document, newLabel));
+      }
     }
 
 
@@ -240,13 +255,24 @@ export class ReviewComponent implements OnInit {
     }
   }
 
+  onLabelFocusOut() {
+    if (this.form?.get('label')?.value == this.document?.label) {
+      this.form?.get('label')?.markAsUntouched();
+    }
+  }
+
   restoreLabel($event: MouseEvent) {
       $event.preventDefault();
       this.labelInput?.nativeElement.blur();
 
       setTimeout(() => {
         this.form?.get('label')?.setValue(this.document?.label);
-      }, 100)
+        this.form?.get('label')?.markAsUntouched();
+      }, 100);
+  }
 
+  setDateField(met: Metadata, suggestion: Date) {
+    let formattedDate = `${suggestion.getFullYear()}-${(suggestion.getMonth()+1).toString().padStart(2, '0')}-${suggestion.getDate().toString().padStart(2, '0')}`;
+    this.form?.get('metadata')?.get(met.type.name)?.setValue(formattedDate);
   }
 }

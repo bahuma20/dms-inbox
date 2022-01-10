@@ -1,5 +1,6 @@
 import {File} from "./File";
 import {DocumentType} from "./DocumentType";
+import {Version} from "./Version";
 
 export interface Document {
   id: number;
@@ -13,4 +14,6 @@ export interface Document {
   document_type: DocumentType;
 
   file_latest: File;
+
+  version_active: Version;
 }

@@ -59,6 +59,13 @@ export class MayanService {
       }));
   }
 
+  getDocumentFilePagesOcr(document: Document, page: Page): Observable<string> {
+    return this.http.get(`${environment.apiUrl}/documents/${document.id}/versions/${document.version_active.id}/pages/${page.id}/ocr/`)
+      .pipe(map((data: any) => {
+        return data.content;
+      }));
+  }
+
   getDocumentImage(document: Document, pageId: number, width?: number, height?: number): Observable<Blob> {
     return this.getDocumentFilePages(document, document.file_latest)
       .pipe(map(pages => {
@@ -155,6 +162,11 @@ export class MayanService {
         timestamp: new Date(entry.file_latest.timestamp),
         filename: entry.file_latest.filename,
         file: entry.file_latest.file
+      },
+      version_active: {
+        id: entry.version_active.id,
+        active: entry.version_active.active,
+        timestamp: new Date(entry.version_active.timestamp),
       }
     };
   }

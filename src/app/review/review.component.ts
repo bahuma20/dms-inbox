@@ -37,6 +37,8 @@ export class ReviewComponent implements OnInit {
   labelSuggestions: string[] = [];
   labelSuggestionsLoading = false;
 
+  dateSuggestions: Date[] = [];
+
   constructor(private mayan: MayanService,
               private route: ActivatedRoute,
               private sanitizer: DomSanitizer,
@@ -104,6 +106,13 @@ export class ReviewComponent implements OnInit {
             .subscribe(documentTypes => {
               documentTypes = documentTypes.filter(value => value.label !== 'INBOX');
               this.availableDocumentTypes = documentTypes;
+            });
+
+          this.suggestionsService.suggestDates(document)
+            .subscribe(dateSuggestions => {
+              this.dateSuggestions = dateSuggestions.sort((a, b) => {
+                return b.getTime() - a.getTime();
+              });
             });
         });
     });
@@ -260,5 +269,10 @@ export class ReviewComponent implements OnInit {
         this.form?.get('label')?.setValue(this.document?.label);
         this.form?.get('label')?.markAsUntouched();
       }, 100);
+  }
+
+  setDateField(met: Metadata, suggestion: Date) {
+    let formattedDate = `${suggestion.getFullYear()}-${(suggestion.getMonth()+1).toString().padStart(2, '0')}-${suggestion.getDate().toString().padStart(2, '0')}`;
+    this.form?.get('metadata')?.get(met.type.name)?.setValue(formattedDate);
   }
 }

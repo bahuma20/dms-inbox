@@ -45,11 +45,19 @@
       </mat-form-field>
 
       <div formGroupName="metadata">
-        <mat-form-field *ngFor="let met of metadata" appearance="fill" style="width: 100%; margin-bottom: .5em;">
-          <mat-label>{{met.type.label}}</mat-label>
-          <input matInput [formControlName]="met.type.name" [required]="met.required" [type]="getFieldType(met)" [name]="selectedDocumentType?.id + '_' + met.type.name">
-          <mat-error *ngIf="form.get('metadata')?.get(met.type.name)?.invalid">{{getErrorMessage(form.get('metadata')?.get(met.type.name))}}</mat-error>
-        </mat-form-field>
+        <ng-container *ngFor="let met of metadata">
+          <mat-form-field appearance="fill" style="width: 100%;" [style.margin-bottom]="getFieldType(met) == 'date' && dateSuggestions ? '-0.5em' : '.5em'">
+            <mat-label>{{met.type.label}}</mat-label>
+            <input matInput [formControlName]="met.type.name" [required]="met.required" [type]="getFieldType(met)" [name]="selectedDocumentType?.id + '_' + met.type.name">
+            <mat-error *ngIf="form.get('metadata')?.get(met.type.name)?.invalid">{{getErrorMessage(form.get('metadata')?.get(met.type.name))}}</mat-error>
+          </mat-form-field>
+
+          <mat-chip-list *ngIf="getFieldType(met) == 'date' && dateSuggestions" style="display: block; margin-bottom: 1.5em;">
+            <mat-chip *ngFor="let suggestion of dateSuggestions" (click)="setDateField(met, suggestion)" style="cursor: pointer; margin: 5px; padding: 5px 7px; min-height: 20px; font-size: 12px;">
+              {{suggestion | date:'dd.MM.Y'}}
+            </mat-chip>
+          </mat-chip-list>
+        </ng-container>
       </div>
 
       <app-tags [tags]="tags" (tagsChanged)="tags = $event"></app-tags>

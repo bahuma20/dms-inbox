@@ -24,7 +24,6 @@ export class ImageCachingInterceptor implements HttpInterceptor {
         .pipe(
           tap(stateEvent => {
             if (stateEvent instanceof HttpResponse) {
-              console.log('swag');
               this.cache.set(req.url, stateEvent.clone());
             }
           })

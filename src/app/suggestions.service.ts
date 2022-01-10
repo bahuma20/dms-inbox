@@ -1,9 +1,11 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {MayanService} from "./mayan.service";
 import {DocumentType} from "./model/DocumentType";
-import {Observable} from "rxjs";
+import {distinct, from, mergeMap, Observable, toArray} from "rxjs";
 import {HttpParams} from "@angular/common/http";
 import {map} from "rxjs/operators";
+import {Document} from "./model/Document";
+import {Page} from "./model/Page";
 
 @Injectable({
   providedIn: 'root'
@@ -55,5 +57,23 @@ export class SuggestionsService {
           return aCount - bCount;
         });
       }));
+  }
+
+  suggestDates(document: Document): Observable<Date[]> {
+    let germanDateRegex = /(?<day>0?[1-9]|[1-2][0-9]|3[0-1])\.(?<month>0?[1-9]|1[0-2])\.(?<year>[0-9]{4})/g;
+
+    return this.mayan.getDocumentFilePages(document, document.file_latest)
+      .pipe(mergeMap(pages => from(pages)))
+      .pipe(mergeMap((page: Page) => {
+        return this.mayan.getDocumentFilePagesOcr(document, page);
+      }))
+      .pipe(map((ocrContent: string) => {
+        return [...ocrContent.matchAll(germanDateRegex)]
+          .map(match => `${match.groups!['year'].padStart(4, '0')}-${match.groups!['month'].padStart(2, '0')}-${match.groups!['day'].padStart(2, '0')}`)
+          .map(dateString => new Date(dateString));
+      }))
+      .pipe(mergeMap(dates => from(dates)))
+      .pipe(distinct(e => e.getTime()))
+      .pipe(toArray())
   }
 }

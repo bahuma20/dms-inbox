@@ -10,6 +10,7 @@ import {AbstractControl, FormBuilder, FormControl, FormGroup, ValidatorFn, Valid
 import {Tag} from "../model/Tag";
 import {concat, debounceTime, finalize, Observable, switchMap, tap} from "rxjs";
 import {SuggestionsService} from "../suggestions.service";
+import {environment} from "../../environments/environment";
 
 @Component({
   selector: 'app-review',
@@ -31,6 +32,7 @@ export class ReviewComponent implements OnInit {
   tags: Tag[] = [];
   submitProgress: number = 0;
 
+  allowLabel = false;
   @ViewChild('labelInput') labelInput?: ElementRef;
   labelSuggestions: string[] = [];
   labelSuggestionsLoading = false;
@@ -110,6 +112,8 @@ export class ReviewComponent implements OnInit {
   selectDocumentType(documentType: DocumentType) {
     this.metadataLoading = true;
     this.selectedDocumentType = documentType;
+
+    this.allowLabel = environment.enableLabelOnDocumentTypes.indexOf(this.selectedDocumentType.label) !== -1;
 
     if (!this.document) {
       return
@@ -195,9 +199,11 @@ export class ReviewComponent implements OnInit {
 
 
     // Set label
-    let newLabel = this.form?.get('label')?.value;
-    if (newLabel !== this.document.label) {
-      actions.push(this.mayan.setDocumentLabel(this.document, newLabel));
+    if (this.allowLabel) {
+      let newLabel = this.form?.get('label')?.value;
+      if (newLabel !== this.document.label) {
+        actions.push(this.mayan.setDocumentLabel(this.document, newLabel));
+      }
     }
 
 

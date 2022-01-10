@@ -24,7 +24,7 @@
     <mat-progress-bar *ngIf="submitLoading" [value]="submitProgress * 100"></mat-progress-bar>
 
     <form *ngIf="form && metadata && !metadataLoading && !submitLoading" [formGroup]="form" (ngSubmit)="submitForm(metadata)">
-      <mat-form-field appearance="fill" style="width: 100%; margin-bottom: .5em;">
+      <mat-form-field appearance="fill" style="width: 100%; margin-bottom: .5em;" *ngIf="allowLabel">
         <mat-label>Titel</mat-label>
         <input matInput
                [placeholder]="document.label"
